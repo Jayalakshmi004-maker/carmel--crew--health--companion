@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Carmel: crew health companion</title>
+<link href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#eef1f6;--panel:#fff;--ink:#14213d;--mute:#5b6783;--line:#d5dbe8;--accent:#3b4cca;--ok:#0f8a68;--warn:#a87400;--bad:#cf2f3a;--okb:#dff4ec;--warnb:#fbefcc;--badb:#fbdfe1;--band:#dff4ec88;--band2:#fbefcc88;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0d1226;--panel:#161d38;--ink:#e9edf8;--mute:#9aa6c6;--line:#2a3459;--accent:#8e9bff;--ok:#3fd1a5;--warn:#f0bd3a;--bad:#ff6b73;--okb:#12342f;--warnb:#3a3115;--badb:#40191f;--band:#3fd1a522;--band2:#f0bd3a1c;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0d1226;--panel:#161d38;--ink:#e9edf8;--mute:#9aa6c6;--line:#2a3459;--accent:#8e9bff;--ok:#3fd1a5;--warn:#f0bd3a;--bad:#ff6b73;--okb:#12342f;--warnb:#3a3115;--badb:#40191f;--band:#3fd1a522;--band2:#f0bd3a1c;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.5 "Familjen Grotesk",system-ui,sans-serif}
+main{max-width:1080px;margin:0 auto;padding:20px 16px 48px}
+h1{font-size:1.5rem;margin:0;font-weight:700}
+h2{font-size:1.1rem;margin:0 0 8px}
+p{margin:0 0 8px}
+.mute{color:var(--mute);font-size:.9rem}
+header{display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;align-items:flex-end;margin-bottom:16px}
+.envs{display:flex;flex-wrap:wrap;gap:6px}
+button{font:inherit;cursor:pointer;color:inherit}
+button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.env{border:1px solid var(--line);background:var(--panel);padding:6px 12px;border-radius:999px}
+.env[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:#fff}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px}
+.top{display:grid;grid-template-columns:260px 1fr;gap:16px;margin-bottom:16px}
+.ring{display:flex;flex-direction:column;align-items:center;text-align:center}
+.ring svg{width:190px;height:190px}
+.ring .n{font-size:2.6rem;font-weight:700;line-height:1}
+.xpbar{height:8px;background:var(--line);border-radius:8px;overflow:hidden;margin:6px 0}
+.xpbar i{display:block;height:100%;background:var(--accent)}
+.prompt{border-left:5px solid var(--accent);background:var(--panel);border-radius:8px;padding:10px 14px;margin:10px 0;border-top:1px solid var(--line);border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+.badges{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.badge{border:1px dashed var(--line);border-radius:10px;padding:4px 10px;font-size:.85rem;color:var(--mute)}
+.badge.on{border:1px solid var(--accent);color:var(--ink);background:var(--bg)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(235px,1fr));gap:12px;margin-bottom:16px}
+.card{background:var(--panel);border:2px solid var(--line);border-radius:12px;padding:12px;text-align:left;display:block;width:100%}
+.card[aria-current=true]{border-color:var(--accent)}
+.card .v{font-size:1.7rem;font-weight:700}
+.st{display:inline-block;font-size:.8rem;font-weight:700;padding:1px 8px;border-radius:6px}
+.s-ok{background:var(--okb);color:var(--ok)}.s-warn{background:var(--warnb);color:var(--warn)}.s-bad{background:var(--badb);color:var(--bad)}.s-none{background:var(--bg);color:var(--mute)}
+.row{display:flex;gap:6px;margin-top:8px}
+.row input{width:100%;min-width:0;font:inherit;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)}
+.row button{border:0;background:var(--accent);color:#fff;border-radius:8px;padding:6px 12px;white-space:nowrap}
+.detail{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+.chartwrap{overflow-x:auto}
+.chartwrap svg{min-width:460px;width:100%;height:auto}
+.ph{font-weight:700;margin-top:10px}
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:8px 16px;border-radius:10px;opacity:0;transition:opacity .25s;pointer-events:none}
+#toast.show{opacity:1}
+@media(max-width:760px){.top,.detail{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+:root[data-theme=dark]{--bg:#070a1a;--panel:#121838d9;--line:#2b3566}
+body{background:radial-gradient(900px 520px at 88% -5%,#4a2fb066,transparent),radial-gradient(700px 520px at -8% 45%,#0b7a9a55,transparent),radial-gradient(500px 400px at 60% 105%,#b0356a44,transparent),#070a1a;background-attachment:fixed}
+main{position:relative;z-index:1}
+#stars{position:fixed;inset:0;z-index:0;pointer-events:none}
+.moon{position:fixed;z-index:0;top:70px;right:6vw;width:110px;height:110px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fffdf4,#e6e1d2 35%,#aaa595 75%,#7d7869);box-shadow:0 0 50px 8px #cfd6ff40,inset -14px -10px 24px #0006;animation:bob 9s ease-in-out infinite}
+.moon::before{content:'';position:absolute;left:24px;top:30px;width:26px;height:26px;border-radius:50%;background:#0002;box-shadow:42px 24px 0 -6px #0002,10px 52px 0 -9px #0002}
+.planet{position:fixed;z-index:0;left:-90px;bottom:-90px;width:260px;height:260px;border-radius:50%;background:radial-gradient(circle at 30% 30%,#ffb36b,#c4476b 55%,#4b2a7a);box-shadow:0 0 60px #c4476b55}
+.planet::after{content:'';position:absolute;left:-50px;right:-50px;top:105px;height:60px;border:5px solid #ffd9a688;border-radius:50%;transform:rotate(-18deg)}
+@keyframes bob{50%{transform:translateY(-12px)}}
+.panel,.card{backdrop-filter:blur(6px);border-color:#8e9bff3a;box-shadow:0 0 24px #3b4cca22}
+h1{font-size:2.2rem;letter-spacing:.04em;background:linear-gradient(90deg,#fff,#a9b4ff 60%,#ff9bd0);-webkit-background-clip:text;background-clip:text;color:transparent}
+.orb{display:inline-block;width:12px;height:12px;margin-left:10px;border-radius:50%;background:#ffd36b;box-shadow:0 0 12px #ffd36b;animation:orbit 4s linear infinite}
+@keyframes orbit{25%{transform:translate(14px,-8px)}50%{transform:translate(0,-16px)}75%{transform:translate(-14px,-8px)}}
+.sos{position:fixed;z-index:5;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));width:68px;height:68px;border-radius:50%;border:3px solid #fff;background:#cf2f3a;color:#fff;font-weight:700;font-size:1.05rem;animation:ping 2s infinite}
+@keyframes ping{0%{box-shadow:0 0 0 0 #ff6b73aa}100%{box-shadow:0 0 0 24px #ff6b7300}}
+.storm{margin-top:8px;padding:8px 12px;border-radius:8px;background:linear-gradient(90deg,#ff6b7333,#f0bd3a33);border:1px solid var(--bad);animation:fl 1.6s ease-in-out infinite}
+@keyframes fl{50%{opacity:.6}}
+#stormbtn[aria-pressed=true]{background:var(--bad);border-color:var(--bad);color:#fff}
+dialog{background:#121838;color:var(--ink);border:2px solid var(--bad);border-radius:16px;max-width:480px;width:92%}
+dialog::backdrop{background:#000b}
+.steps{list-style:none;padding:0;margin:10px 0}.steps li{padding:2px 0}
+.arcade{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin:12px 0 90px}
+.arcade h3{margin:0 0 4px}
+.pad{width:100%;height:110px;border:0;border-radius:12px;background:var(--accent);color:#fff;font-weight:700;font-size:1.05rem}
+.pad.wait{background:var(--bad)}.pad.go{background:var(--ok);color:#04130e}
+.orbitb{width:100px;height:100px;margin:8px auto;border-radius:50%;background:radial-gradient(circle at 35% 30%,#bfeaff,#3b4cca);box-shadow:0 0 30px #3b4cca88;transform:scale(.7)}
+.orbitb.run{animation:br 10s ease-in-out infinite}
+@keyframes br{0%,100%{transform:scale(.7)}40%{transform:scale(1.35)}}
+.seq{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:8px 0}
+.star{font-size:1.8rem;padding:8px 0;border-radius:10px;border:1px solid var(--line);background:#0d1226;opacity:.7}
+.star.lit{opacity:1;transform:scale(1.1);box-shadow:0 0 18px currentColor}
+.stack{display:flex;height:14px;border-radius:7px;overflow:hidden;margin:4px 0}.stack span{display:block;height:100%}
+@media(max-width:760px){.moon{width:70px;height:70px;top:60px}.moon::before{display:none}h1{font-size:1.8rem}}
+@media (prefers-reduced-motion:reduce){.moon,.orb,.sos,.storm,.orbitb{animation:none!important}}
+:root[data-theme=dark]{--ink:#f2e2c9;--mute:#b3a9c9;--accent:#e9ad63}
+h1{background:linear-gradient(90deg,#ffd59a,#f3a8c8 60%,#a9b4ff);-webkit-background-clip:text;background-clip:text;color:transparent}
+.moon{background:radial-gradient(circle at 35% 30%,#fff1d6,#e8d3ad 35%,#b09a78 75%,#7d6b55);box-shadow:0 0 50px 8px #ffd59a38,inset -14px -10px 24px #0006}
+.env[aria-pressed=true],.row button,.pad{color:#1a1226}
+.pad.wait,.sos,#stormbtn[aria-pressed=true]{color:#ffe9cc}
+.sos{border-color:#ffd59a}
+#pdlg{border-color:var(--accent)}
+.chip{display:flex;align-items:center;gap:8px;margin-top:8px;border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:4px 14px 4px 4px;text-align:left}
+.av{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,#e9ad63,#c4476b);color:#1a1226;font-weight:700}
+.cab{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:16px}
+.cab .v{font-size:1.6rem;font-weight:700}
+.meter{height:8px;border-radius:8px;background:var(--line);overflow:hidden;margin-top:6px}.meter i{display:block;height:100%}
+.stn{display:grid;grid-template-columns:240px 1fr;gap:16px;margin-bottom:16px}
+.srow{border-top:1px solid var(--line);padding:8px 0}.srow:first-child{border-top:0}
+.dr{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:3px 0}
+#dust{width:100%;height:190px;border-radius:12px;background:#0b1030;display:block;touch-action:manipulation}
+@media(max-width:760px){.stn{grid-template-columns:1fr}}
+.arcade{margin-bottom:96px}.rm{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:12px}.rm .v{font-size:1.5rem;font-weight:700}.bars{display:flex;align-items:flex-end;gap:4px;height:70px;margin:8px 0}.bars i{flex:1;border-radius:3px 3px 0 0;min-height:3px}.gb{display:grid;grid-template-columns:130px 1fr;gap:16px;align-items:center;margin-bottom:16px}.gbr{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;border-top:1px solid var(--line)}.ear{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin:8px 0}.ear select{width:100%}@media(max-width:760px){.gb{grid-template-columns:1fr}}a{color:var(--accent)}.hz{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-bottom:16px}.hz h3{font-size:1rem}
+.hz{grid-template-columns:repeat(auto-fit,minmax(290px,1fr))}.hz .v{font-size:1.7rem;font-weight:700}
+</style>
+</head>
+<body>
+<canvas id='stars' aria-hidden='true'></canvas><div class='moon' aria-hidden='true'></div><div class='planet' aria-hidden='true'></div>
+<main>
+<header>
+ <div><h1>Carmel<span class='orb'></span></h1><div class="mute">Your daily health check for life away from Earth. Log a little each day; it adds up.</div><button class='chip' id='prof'></button></div>
+ <div style='display:flex;flex-wrap:wrap;gap:8px'><div class="envs" id="envs" role="group" aria-label="Mission environment"></div><button class='env' id='stormbtn' aria-pressed='false'>☀ Solar storm drill</button></div>
+</header>
+<div id="envnote" class="panel" style="margin-bottom:12px"></div>
+<div class="top">
+ <section class="panel ring" id="ring" aria-label="Readiness"></section>
+ <section class="panel" id="mission"></section>
+</div>
+<h2>Radiation monitor</h2><div class='panel' id='rm' style='margin-bottom:16px'></div>
+<h2>Hazard measurements, live</h2><p class='mute'>Measured live for the hazards NASA’s Human Research Program describes. Select a hazard name to read NASA’s page.</p><div class='hz' id='haz'></div>
+<h2>Gravity body check</h2><div class='panel gb' id='gb'></div>
+<h2>Cabin systems</h2><p class='mute' id='cabnote'></p><div class='cab' id='cab'></div>
+<h2>Nearby stations and doctors</h2><div class='stn panel' id='stn'></div>
+<h2>Today's indicators</h2>
+<p class="mute">Colors always come with a word and a symbol: ● steady, ▲ watch, ■ act. Select a card to see its trend and what it means.</p>
+<div class="grid" id="grid"></div>
+<section class="panel detail" id="detail"></section>
+<h2 style='margin-top:22px'>Crew training arcade</h2>
+<div class='arcade'>
+<div class='panel'><h3>Reflex check</h3><p class='mute'>Tap when the pad turns green. Your best of three goes into Alertness.</p><button id='rpad' class='pad'>Tap to start</button></div>
+<div class='panel'><h3>Calm orbit</h3><p class='mute'>One minute of paced breathing. In as the orb grows, out as it shrinks.</p><div id='orbit' class='orbitb'></div><div id='blab' class='mute'></div><button class='env' id='bstart'>Start 1 minute</button></div>
+<div class='panel'><h3>Star sequence</h3><p class='mute'>Repeat the pattern. A quick focus check that earns XP.</p><div id='seq' class='seq'></div><div id='sqmsg' class='mute'>Press start</div><button class='env' id='sstart'>Start</button></div>
+<div class='panel'><h3>Water reminder</h3><p class='mute'>Thirst signals are weak in space. Set a repeating nudge.</p><select id='hint' class='env'><option value='1'>Every 1 min (demo)</option><option value='30'>Every 30 min</option><option value='120' selected>Every 2 hours</option></select> <button class='env' id='hbtn'>Start</button><p id='hleft' class='mute'>Reminder off</p><button class='env' id='hdrink'>I drank 250 mL</button></div>
+<div class='panel' style='grid-column:1/-1'><h3>Stardust drift</h3><p class='mute'>A stress reliever. Tap the drifting lights to release them. Slow breaths, soft focus, 45 seconds.</p><canvas id='dust'></canvas><div id='dlab' class='mute'>Press start</div><button class='env' id='dstart'>Start</button></div>
+</div>
+</main>
+<button class='sos' id='sosbtn' aria-label='Emergency: connect to nearest station'>SOS</button>
+<dialog id='pdlg'></dialog>
+<dialog id='sos'><div id='sosbody'></div><button class='env' id='sosclose' style='margin-top:8px'>Close</button></dialog>
+<div id="toast" role="status" aria-live="polite"></div>
+<script>
+const IND=[
+{k:'sleep',n:'Sleep',u:'h',good:[7,9],watch:[6,10],min:0,max:12,step:.5,base:7.3,amp:.9,how:'Check your sleep tracker, or count the hours between lights-out and waking, minus the time you lay awake.',why:'Short sleep slows reactions and judgment. Light cycles, noise and shift changes make sleep harder off Earth.',act:'Dim lights 1 hour before sleep, use ear plugs and an eye mask, and keep a fixed sleep window.'},
+{k:'hr',n:'Resting heart rate',u:'bpm',good:[50,75],watch:[45,90],min:35,max:110,step:1,base:64,amp:5,how:'Sit still for 5 minutes. Place two fingers on your wrist or use your wearable. Count beats for 30 seconds and double it.',why:'A resting rate that creeps up can signal stress, dehydration, poor sleep or illness.',act:'Rest, drink water, and repeat in an hour. If it stays high with dizziness or chest discomfort, call the flight surgeon.'},
+{k:'spo2',n:'Blood oxygen',u:'%',good:[95,100],watch:[92,100],min:85,max:100,step:1,base:97,amp:1,how:'Clip the pulse oximeter on a warm, still fingertip. Wait for the number to steady for about 10 seconds.',why:'Low oxygen means your body is not getting enough air, often from a cabin air or suit problem.',act:'Check the cabin or suit oxygen readings. Below 92%, stop activity and alert mission control.'},
+{k:'move',n:'Exercise',u:'min',good:[90,300],watch:[45,300],min:0,max:240,step:5,base:105,amp:25,how:'Add up minutes of resistance and cardio work today, including treadmill, bike or resistance device sessions.',why:'Without gravity or with less of it, muscles and bones weaken fast. Daily load slows that loss.',act:'Add a short resistance set. Even 15 minutes helps protect muscle and bone.'},
+{k:'mood',n:'Mood',u:'/5',good:[3.5,5],watch:[2.5,5],min:1,max:5,step:.5,base:3.9,amp:.5,how:'Rate how you feel today, from 1 (very low) to 5 (great). Go with your first instinct.',why:'Isolation, confinement and long workdays affect mood and teamwork. Early notice lets you act early.',act:'Call family, share a meal with the crew, or take a screen-free break. Talk to a counselor if low days stack up.'},
+{k:'water',n:'Fluids',u:'L',good:[2,3.5],watch:[1.5,4],min:0,max:5,step:.1,base:2.3,amp:.35,how:'Add up drinks and rehydrated food from today. Your drink pouches show the amounts.',why:'In microgravity thirst signals weaken, so you can run low without feeling it.',act:'Drink a pouch now and set a reminder every 2 hours.'},
+{k:'co2',n:'Cabin CO₂',u:'ppm',good:[0,3000],watch:[0,5000],min:0,max:7000,step:50,base:2500,amp:450,how:'Read the cabin CO₂ monitor nearest where you spend most time. Pockets of stale air can form around you, so move air with a fan.',why:'High CO₂ causes headaches, drowsiness and weaker focus, and it builds up quietly.',act:'Move to a better-ventilated module, check fans and scrubbers, and report readings above 5,000 ppm.'},
+{k:'rad',n:'Radiation dose',u:'mSv/day',good:[0,1],watch:[0,2],min:0,max:3,step:.05,base:.5,amp:.1,how:'Read your personal dosimeter or the daily total on the wrist display. Log the dose for the last 24 hours.',why:'Space radiation raises long-term cancer and tissue risk, and NASA ranks it among its five hazards of spaceflight. Dose adds up over a mission. Neutrons are about 30% of the dose on the ISS, which is why the Canadian Space Agency funds instruments that track them continuously.',act:'During a solar event, move to the shielded storm shelter and limit time outside.'},
+{k:'react',n:'Alertness',u:'ms',good:[0,300],watch:[0,400],min:150,max:600,step:5,base:285,amp:30,how:'Play the Reflex check in the arcade below, or type your best reaction time. Test before a demanding task.',why:'Slower reactions are an early sign of fatigue, CO₂ buildup or stress, often before you feel tired.',act:'Take a rest break, drink water, check cabin air and retest in 30 minutes. Avoid risky tasks until it improves.'},
+{k:'muscle',n:'Muscle strength',u:'% baseline',good:[90,200],watch:[80,200],min:50,max:110,step:1,base:90,amp:3,how:'Squeeze the hand grip dynamometer three times with your stronger hand and keep the best. Divide it by your pre-flight best and enter the percentage. A resistance-device load test works too.',why:'Muscles weaken quickly when gravity is missing or reduced. On Mars, astronauts would work against about three-eighths of Earth gravity for up to two years.',act:'Add a resistance session today and ask the medical team to review any drop of more than 10%.'},
+{k:'bone',n:'Bone strength',u:'% baseline',good:[95,200],watch:[90,200],min:80,max:105,step:.5,base:95,amp:1.2,how:'Bone strength cannot be felt. Enter your latest bone scan or ultrasound result as a percentage of your pre-flight baseline, and update it when a new scan is done.',why:'Bones thin when they carry little load, and low or partial gravity reduces the loading they need.',act:'Do impact and heavy resistance exercise, review vitamin D and calcium with the medical team, and flag any fast drop.'},
+{k:'ear',n:'Inner ear',u:'/12',good:[0,2],watch:[0,5],min:0,max:12,step:1,base:1,amp:1.2,how:'Rate three symptoms from 0 (none) to 4 (severe): dizziness or spinning, nausea, and unsteadiness or disorientation. Add the scores. The Inner ear check in the Gravity body check does this for you.',why:'The inner ear senses motion and balance. Changing gravity levels confuse it and can cause dizziness, nausea and clumsiness, especially when you turn your head or after landing.',act:'Move slowly, avoid sudden head turns and fix your gaze on a stable point. Report a score above 5 or spinning that does not settle.'}
+];
+const ENVS=[
+{id:'ship',n:'Spacecraft',g:'Microgravity, deep space',mod:{rad:1.9,co2:-200,hr:3,move:10},note:'In transit with limited shielding and tight quarters. Watch radiation, fluid shifts and sleep.',risk:['Fluid shifts upward can cause head pressure and vision changes.','Radiation exposure is highest here.','Small habitat, long confinement.']},
+{id:'iss',n:'Space station',g:'Microgravity, low orbit',mod:{rad:.55,co2:300,hr:2,move:30},note:'Orbit gives 16 sunrises a day, which scrambles body clocks. CO₂ can pool around you.',risk:['Bone and muscle loss without daily exercise.','Cabin CO₂ pockets around the head.','Light cycle disruption hurts sleep.']},
+{id:'rover',n:'Pressurized rover',g:'Surface travel, partial gravity',mod:{rad:1.1,co2:500,hr:4,move:-40},note:'Long drives in a small cabin. Movement is limited and vibration adds fatigue.',risk:['Long sitting, little movement.','Dust brought in on suits irritates lungs and eyes.','Small cabin means higher CO₂ and shared noise.']},
+{id:'base',n:'Lunar or Mars base',g:'Partial gravity, surface',mod:{rad:.7,co2:-100,hr:0,move:0},note:'Partial gravity helps bones, but dust, radiation and isolation need steady attention.',risk:['Abrasive dust affects lungs and skin.','Partial gravity still allows bone loss.','Isolation and delayed contact with Earth.']}
+];
+const BADGES=[['first','First log'],['full','Full crew day'],['sleep','Sleep keeper'],['water','Hydration hero'],['streak','5-day streak']];
+const S={env:'iss',data:{},today:{},draft:{},xp:60,streak:4,badges:{},sel:'sleep'};
+function rng(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function seed(){const e=ENVS.find(x=>x.id===S.env),r=rng(S.env.length*977+S.env.charCodeAt(0));S.data={};S.today={};
+IND.forEach(i=>{const m=e.mod[i.k]||0;let b=i.base+m;if(i.k==='rad')b=e.mod.rad*.5;if(i.k==='co2')b=i.base+m;
+S.data[i.k]=Array.from({length:13},()=>clamp(i,round(i,b+(r()-.5)*2*i.amp)))});
+S.draft={};IND.forEach(i=>S.draft[i.k]=S.data[i.k][12])}
+const round=(i,v)=>Math.round(v/i.step)*i.step;
+const clamp=(i,v)=>Math.min(i.max,Math.max(i.min,+v.toFixed(2)));
+function status(i,v){if(v==null)return'none';if(v>=i.good[0]&&v<=i.good[1])return'ok';if(v>=i.watch[0]&&v<=i.watch[1])return'warn';return'bad'}
+const LBL={ok:'● Steady',warn:'▲ Watch',bad:'■ Act',none:'○ Not logged'};
+const fmt=(i,v)=>v==null?'–':(i.step<1?(+v).toFixed(i.step<.1?2:1):Math.round(v))+'';
+const cur=i=>S.today[i.k]!=null?S.today[i.k]:S.data[i.k][12];
+function toast(t){const e=document.getElementById('toast');e.textContent=t;e.className='show';clearTimeout(toast.t);toast.t=setTimeout(()=>e.className='',2200)}
+function log(k){const i=IND.find(x=>x.k===k);let v=parseFloat(S.draft[k]);if(isNaN(v)){toast('Enter a number first.');return}
+v=clamp(i,v);const first=S.today[k]==null;S.today[k]=v;S.draft[k]=v;
+if(first){const st=status(i,v);const gain=10+(st==='ok'?5:0);S.xp+=gain;toast('+'+gain+' XP. '+i.n+' logged: '+LBL[st].slice(2)+'.')}else toast(i.n+' updated.');
+const n=Object.keys(S.today).length;
+award('first');if(k==='sleep'&&status(i,v)==='ok')award('sleep');if(k==='water'&&status(i,v)==='ok')award('water');
+if(n===IND.length&&first&&!S.badges.full){award('full');S.streak++;S.xp+=25;if(S.streak>=5)award('streak')}
+S.sel=k;render()}
+function award(b){if(!S.badges[b]){S.badges[b]=1;S.xp+=20;setTimeout(()=>toast('Badge unlocked: '+BADGES.find(x=>x[0]===b)[1]),900)}}
+function ringSvg(p,col){const R=78,C=2*Math.PI*R;return `<svg viewBox="0 0 190 190" role="img" aria-label="Readiness ${p} percent"><circle cx="95" cy="95" r="${R}" fill="none" stroke="var(--line)" stroke-width="14"/><circle cx="95" cy="95" r="${R}" fill="none" stroke="${col}" stroke-width="14" stroke-linecap="round" stroke-dasharray="${C*p/100} ${C}" transform="rotate(-90 95 95)"/><text x="95" y="102" text-anchor="middle" font-size="42" font-weight="700" fill="var(--ink)">${p}</text><text x="95" y="124" text-anchor="middle" font-size="12" fill="var(--mute)">readiness</text></svg>`}
+function sparkline(i){const d=S.data[i.k].concat(S.today[i.k]!=null?[S.today[i.k]]:[]);const w=200,h=34,sx=w/(Math.max(d.length-1,1));const y=v=>h-2-((v-i.min)/(i.max-i.min))*(h-4);return `<svg viewBox="0 0 ${w} ${h}" width="100%" height="34" aria-hidden="true"><polyline fill="none" stroke="var(--mute)" stroke-width="1.5" points="${d.map((v,j)=>(j*sx).toFixed(1)+','+y(v).toFixed(1)).join(' ')}"/><circle cx="${((d.length-1)*sx).toFixed(1)}" cy="${y(d[d.length-1]).toFixed(1)}" r="3.5" fill="var(--${({ok:'ok',warn:'warn',bad:'bad'})[status(i,d[d.length-1])]})"/></svg>`}
+function chart(i){const d=S.data[i.k].concat(S.today[i.k]!=null?[S.today[i.k]]:[]);const W=640,H=240,L=44,R=14,T=14,B=30,pw=W-L-R,ph=H-T-B;const x=j=>L+j*pw/13;const y=v=>T+ph-((Math.min(i.max,Math.max(i.min,v))-i.min)/(i.max-i.min))*ph;
+const band=(a,b,f)=>`<rect x="${L}" y="${y(Math.min(b,i.max))}" width="${pw}" height="${Math.max(0,y(Math.max(a,i.min))-y(Math.min(b,i.max)))}" fill="var(${f})"/>`;
+let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${i.n} over the last 14 days">`+band(i.watch[0],i.watch[1],'--band2')+band(i.good[0],i.good[1],'--band');
+for(let t=0;t<=4;t++){const v=i.min+(i.max-i.min)*t/4;s+=`<line x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="${L-6}" y="${y(v)+4}" text-anchor="end" font-size="11" fill="var(--mute)">${fmt(i,v)}</text>`}
+s+=`<polyline fill="none" stroke="var(--accent)" stroke-width="2.5" points="${d.map((v,j)=>x(j)+','+y(v)).join(' ')}"/>`;
+d.forEach((v,j)=>{const c={ok:'--ok',warn:'--warn',bad:'--bad'}[status(i,v)];s+=`<circle cx="${x(j)}" cy="${y(v)}" r="${j===13?7:4.5}" fill="var(${c})" stroke="var(--panel)" stroke-width="2"><title>${fmt(i,v)} ${i.u}</title></circle>`});
+[0,6,13].forEach(j=>s+=`<text x="${x(j)}" y="${H-8}" text-anchor="${j?j===13?'end':'middle':'start'}" font-size="11" fill="var(--mute)">${j===13?'today':(j-13)+' d'}</text>`);
+return s+'</svg>'}
+function render(){
+const e=ENVS.find(x=>x.id===S.env);
+document.getElementById('envs').innerHTML=ENVS.map(x=>`<button class="env" aria-pressed="${x.id===S.env}" data-env="${x.id}">${x.n}</button>`).join('');
+document.getElementById('envnote').innerHTML=`<strong>${e.n}</strong> <span class="mute">(${e.g})</span><br>${e.note}${S.storm?'<div class=storm><strong>Solar storm alert.</strong> Radiation is elevated. Move to the shelter, limit time outside and press SOS if anyone needs help.</div>':''}`;
+const pts=IND.map(i=>({ok:100,warn:60,bad:20})[status(i,cur(i))]);const score=Math.round(pts.reduce((a,b)=>a+b,0)/pts.length);
+const col=score>=80?'var(--ok)':score>=55?'var(--warn)':'var(--bad)';
+document.getElementById('ring').innerHTML=ringSvg(score,col)+`<div class="mute">${score>=80?'● Crew is steady':score>=55?'▲ A few things to watch':'■ Needs attention'}</div>`;
+const lvl=Math.floor(S.xp/100)+1,pct=S.xp%100,done=Object.keys(S.today).length,next=IND.find(i=>S.today[i.k]==null);
+document.getElementById('mission').innerHTML=`<h2>Mission routine</h2>`+
+(next?`<div class="prompt"><strong>Next check: ${next.n}.</strong> ${next.how}</div>`:`<div class="prompt"><strong>All checks done for today.</strong> Nice work. Your streak is safe.</div>`)+
+`<div><strong>Level ${lvl}</strong> <span class="mute">${S.xp} XP · ${100-pct} to next level · ${S.streak}-day streak · ${done}/${IND.length} logged today</span></div><div class="xpbar" aria-hidden="true"><i style="width:${pct}%"></i></div>
+<div class="badges">${BADGES.map(b=>`<span class="badge ${S.badges[b[0]]?'on':''}">${S.badges[b[0]]?'★':'☆'} ${b[1]}</span>`).join('')}</div>`;
+document.getElementById('grid').innerHTML=IND.map(i=>{const t=S.today[i.k],st=status(i,t);return `<div class="card" style="border-color:${i.k===S.sel?'var(--accent)':'var(--line)'}"><button class="card-sel" data-sel="${i.k}" style="all:unset;cursor:pointer;display:block;width:100%" aria-label="Show ${i.n} details"><div class="mute">${i.n}</div><div class="v">${fmt(i,cur(i))} <span class="mute" style="font-size:.9rem;font-weight:400">${i.u}</span></div><span class="st s-${st}">${LBL[st]}</span>${sparkline(i)}</button><div class="row"><input type="number" inputmode="decimal" step="${i.step}" min="${i.min}" max="${i.max}" value="${S.draft[i.k]}" data-in="${i.k}" aria-label="${i.n} in ${i.u}"><button data-log="${i.k}">${t==null?'Log':'Update'}</button></div></div>`}).join('');
+const i=IND.find(x=>x.k===S.sel),st=status(i,cur(i)),avg=S.data[i.k].reduce((a,b)=>a+b,0)/13;
+document.getElementById('detail').innerHTML=`<div><h2>${i.n}: last 14 days</h2><div class="chartwrap">${chart(i)}</div><p class="mute">Green band is the steady range (${i.good[0]}–${i.good[1]} ${i.u}). Yellow band is the watch range. Outside the bands, act.</p></div>
+<div><span class="st s-${st}">${LBL[st]}</span> <span class="mute">13-day average ${fmt(i,avg)} ${i.u}</span>
+${HZ[i.k]?`<p class=mute>NASA hazard: ${HZ[i.k]}</p>`:''}${i.k==='sleep'?sleepBars(cur(i)):''}<div class="ph">How to measure</div><p>${i.how}</p><div class="ph">Why it matters</div><p>${i.why}</p><div class="ph">If it is off</div><p>${i.act}</p><div class="ph">Risks in this setting</div><ul style="margin:0;padding-left:18px">${e.risk.map(r=>`<li>${r}</li>`).join('')}</ul></div>`}
+document.addEventListener('click',ev=>{const t=ev.target.closest('[data-env],[data-sel],[data-log]');if(!t)return;
+if(t.dataset.env){S.env=t.dataset.env;seed();render()}else if(t.dataset.sel){S.sel=t.dataset.sel;render()}else log(t.dataset.log)});
+document.addEventListener('input',ev=>{if(ev.target.dataset.in)S.draft[ev.target.dataset.in]=ev.target.value});
+document.addEventListener('keydown',ev=>{if(ev.key==='Enter'&&ev.target.dataset&&ev.target.dataset.in)log(ev.target.dataset.in)});
+const $=id=>document.getElementById(id);
+function gAdj(){const g={ship:0,iss:1,rover:2,base:3}[S.env];['muscle','bone'].forEach(k=>{const i=IND.find(x=>x.k===k);S.data[k]=S.data[k].map(v=>clamp(i,v+g));S.draft[k]=S.data[k][12]})}
+const _seed=seed;seed=function(){_seed();gAdj();if(S.storm)S.today.rad=2.4};
+function sleepBars(h){const p=[['Deep',.18,'#6c7bff'],['REM',.22,'#b07cff'],['Light',.52,'#4cc9f0'],['Awake',.08,'#ff9f6e']];return `<div class=ph>Sleep stages (estimated)</div><div class=stack>${p.map(x=>`<span style='width:${x[1]*100}%;background:${x[2]}' title='${x[0]}'></span>`).join('')}</div><p class=mute>${p.map(x=>x[0]+' '+(h*x[1]).toFixed(1)+' h').join(', ')}. Simulated from your total sleep.</p>`}
+const STN={ship:[['Lunar Gateway',38000],['Orbital Relay Hub',120000],['Earth Mission Control',384000]],iss:[['Tiangong Station',210],['Earth Mission Control',420],['Lunar Gateway',384000]],rover:[['Base Camp Alpha',14],['Surface Relay Tower',60],['Lunar Gateway',3100]],base:[['Base Medical Bay',0.2],['Lunar Gateway',3100],['Earth Mission Control',384000]]};
+const AID={med:['Stay still and secure yourself. Tell the crew.','Check breathing, pulse and responsiveness.','Follow the flight surgeon, who can see your vitals now.'],air:['Put on masks or suits.','Isolate the affected module and seal the hatch.','Move to the safe module and check CO₂ and oxygen.'],rad:['Go to the storm shelter now.','Stay inside until the all-clear.','Read out your dosimeter to the medical team.'],inj:['Control bleeding with firm pressure.','Do not move a neck or back injury.','Keep the person warm and talking.']};
+let SOST=[];
+function openSOS(){$('sosbody').innerHTML='<h2>Emergency link</h2><p>What is happening?</p><div class=envs>'+[['med','Medical'],['air','Air or fire'],['rad','Radiation'],['inj','Injury']].map(a=>`<button class=env data-em=${a[0]}>${a[1]}</button>`).join('')+'</div>';$('sos').showModal()}
+function closeSOS(){SOST.forEach(clearTimeout);SOST=[];$('sos').close()}
+function connect(t){SOST.forEach(clearTimeout);const n=STN[S.env].slice().sort((a,b)=>a[1]-b[1])[0],d=n[1]/299792,dl=d<1?Math.max(1,Math.round(d*1000))+' ms':d.toFixed(1)+' s';
+const fl=IND.filter(i=>status(i,cur(i))!=='ok').map(i=>i.n+' '+fmt(i,cur(i))+' '+i.u+' ('+LBL[status(i,cur(i))].slice(2)+')');
+const st=['Locating nearest station…','Nearest: '+n[0]+', '+n[1].toLocaleString()+' km away','Opening encrypted link…','Sending vitals snapshot: '+(fl.length?fl.join('; '):'all indicators steady'),'Connected. One-way signal delay '+dl+'. Crew doctor is joining.'];
+$('sosbody').innerHTML='<h2>Emergency link</h2><ul class=steps id=stl></ul><div id=aid></div><p class=mute>Training simulation. In a real emergency use the vehicle comms panel and follow mission procedures.</p>';
+st.forEach((s,j)=>SOST.push(setTimeout(()=>$('stl').insertAdjacentHTML('beforeend','<li>'+(j<4?'⏳ ':'✅ ')+s+'</li>'),j*900)));
+SOST.push(setTimeout(()=>{$('aid').innerHTML='<div class=ph>Do this now</div><ol>'+AID[t].map(a=>'<li>'+a+'</li>').join('')+'</ol>'},st.length*900))}
+document.addEventListener('click',ev=>{const t=ev.target;if(t.id==='sosbtn')openSOS();else if(t.id==='sosclose')closeSOS();else if(t.dataset.em)connect(t.dataset.em)});
+$('sos').addEventListener('close',()=>{SOST.forEach(clearTimeout);SOST=[]});
+$('stormbtn').onclick=()=>{S.storm=!S.storm;if(S.storm){S.today.rad=2.4;S.draft.rad=2.4;toast('Solar storm alert on. Move to shelter.')}else{delete S.today.rad;S.draft.rad=S.data.rad[12];toast('All clear.')}$('stormbtn').setAttribute('aria-pressed',S.storm);render()};
+let RX={st:0,res:[],t:0,to:0};
+$('rpad').onclick=()=>{const p=$('rpad');if(RX.st===0){RX.st=1;p.className='pad wait';p.textContent='Wait for green…';RX.to=setTimeout(()=>{RX.st=2;p.className='pad go';p.textContent='TAP!';RX.t=performance.now()},1500+Math.random()*2500)}else if(RX.st===1){clearTimeout(RX.to);RX.st=0;p.className='pad';p.textContent='Too soon. Tap to retry'}else{const ms=Math.round(performance.now()-RX.t);RX.res.push(ms);RX.st=0;p.className='pad';if(RX.res.length<3)p.textContent=ms+' ms. Tap for round '+(RX.res.length+1)+' of 3';else{const b=Math.min(...RX.res);RX.res=[];p.textContent='Best '+b+' ms. Tap to play again';S.draft.react=Math.round(b/5)*5;log('react')}}};
+let BR=0;$('bstart').onclick=()=>{if(BR)return;const o=$('orbit'),t0=Date.now();o.classList.add('run');BR=setInterval(()=>{const e=(Date.now()-t0)/1000;if(e>=60){clearInterval(BR);BR=0;o.classList.remove('run');$('blab').textContent='Done';S.xp+=15;toast('+15 XP. Calm orbit complete.');render();return}$('blab').textContent=(e%10<4?'Breathe in':'Breathe out')+', '+(60-Math.floor(e))+' s left'},250)};
+let SQ={seq:[],pos:0,show:false};
+function flash(s){const b=$('seq').children[s];b.classList.add('lit');setTimeout(()=>b.classList.remove('lit'),350)}
+function sqNext(){SQ.seq.push(Math.random()*4|0);SQ.pos=0;SQ.show=true;$('sqmsg').textContent='Watch…';SQ.seq.forEach((s,j)=>setTimeout(()=>flash(s),600+j*600));setTimeout(()=>{SQ.show=false;$('sqmsg').textContent='Your turn'},600+SQ.seq.length*600)}
+function sqTap(j){if(SQ.show||!SQ.seq.length)return;flash(j);if(SQ.seq[SQ.pos]===j){if(++SQ.pos===SQ.seq.length){$('sqmsg').textContent='Nice! Next round…';setTimeout(sqNext,900)}}else{const r=SQ.seq.length-1,g=r*5;SQ.seq=[];$('sqmsg').textContent='Round '+r+' reached. +'+g+' XP';if(g){S.xp+=g;render()}}}
+['★','✦','✹','✷'].forEach((c,j)=>{const b=document.createElement('button');b.className='star';b.textContent=c;b.style.color=['#ffd36b','#6cd4ff','#ff8fd0','#8ef0b0'][j];b.setAttribute('aria-label','Star '+(j+1));b.onclick=()=>sqTap(j);$('seq').appendChild(b)});
+$('sstart').onclick=()=>{SQ.seq=[];sqNext()};
+const H={on:0,left:0,iv:0,t:0};
+$('hbtn').onclick=()=>{if(H.on){clearInterval(H.t);H.on=0;$('hbtn').textContent='Start';$('hleft').textContent='Reminder off';return}H.on=1;H.iv=$('hint').value*60;H.left=H.iv;$('hbtn').textContent='Stop';H.t=setInterval(()=>{H.left--;if(H.left<=0){H.left=H.iv;toast('Time to drink water')}$('hleft').textContent='Next reminder in '+Math.floor(H.left/60)+':'+String(H.left%60).padStart(2,'0')},1000)};
+$('hdrink').onclick=()=>{const i=IND.find(x=>x.k==='water');S.today.water=clamp(i,(S.today.water!=null?S.today.water:0)+.25);S.draft.water=S.today.water;S.xp+=5;toast('+5 XP. Water logged.');render()};
+(function(){const c=$('stars'),x=c.getContext('2d');let W,H2,st=[],sh=null;const rm=matchMedia('(prefers-reduced-motion:reduce)').matches;
+function size(){W=c.width=innerWidth;H2=c.height=innerHeight;st=Array.from({length:Math.min(220,W*H2/6000|0)},()=>({x:Math.random()*W,y:Math.random()*H2,r:Math.random()*1.4+.2,p:Math.random()*6.28,s:.5+Math.random()*1.5}))}
+function draw(t){x.clearRect(0,0,W,H2);st.forEach(a=>{x.globalAlpha=.35+.65*Math.abs(Math.sin(a.p+t/1000*a.s));x.fillStyle='#f6e0bd';x.beginPath();x.arc(a.x,a.y,a.r,0,6.28);x.fill()});
+if(!sh&&!rm&&Math.random()<.004)sh={x:Math.random()*W,y:Math.random()*H2*.4,l:0};
+if(sh){x.globalAlpha=1;const g=x.createLinearGradient(sh.x,sh.y,sh.x-sh.l,sh.y-sh.l/2);g.addColorStop(0,'#ffd59a');g.addColorStop(1,'transparent');x.strokeStyle=g;x.lineWidth=2;x.beginPath();x.moveTo(sh.x,sh.y);x.lineTo(sh.x-sh.l,sh.y-sh.l/2);x.stroke();sh.x+=14;sh.y+=7;sh.l=Math.min(sh.l+6,90);if(sh.x>W+100||sh.y>H2)sh=null}
+if(!rm)requestAnimationFrame(draw)}
+size();addEventListener('resize',()=>{size();if(rm)draw(0)});draw(0)})();
+S.user={name:'Nova_7',role:'Flight engineer'};
+const ROLES=['Flight engineer','Commander','Pilot','Mission medic','Scientist'];
+function profRender(){const l=Math.floor(S.xp/100)+1;$('prof').innerHTML=`<span class=av>${S.user.name[0].toUpperCase()}</span><span><strong>${S.user.name}</strong> <span class=mute>${S.user.role}, level ${l}</span></span>`}
+$('prof').onclick=()=>{$('pdlg').innerHTML=`<h2>Crew profile</h2><label class=mute>Username<br><input id=un value='${S.user.name}' maxlength=16 style='width:100%;font:inherit;padding:6px 8px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink)'></label><p class=mute>Role</p><select id=ur class=env>${ROLES.map(r=>`<option${r===S.user.role?' selected':''}>${r}</option>`).join('')}</select><p class=mute>${S.xp} XP, ${S.streak}-day streak, ${Object.keys(S.badges).length} badges</p><button class=env id=usave>Save</button> <button class=env id=ucancel>Cancel</button>`;$('pdlg').showModal();$('usave').onclick=()=>{S.user.name=($('un').value.trim().replace(/[^a-zA-Z0-9_ -]/g,''))||'Nova_7';S.user.role=$('ur').value;$('pdlg').close();render()};$('ucancel').onclick=()=>$('pdlg').close()};
+const CABB={ship:[2300,22,21,96],iss:[2900,22.5,20.9,120],rover:[3800,24,20.5,40],base:[2400,21,21,150]};
+let C={};function cabInit(){const b=CABB[S.env];C={co2:b[0],t:b[1],o2:b[2],res:b[3]}}cabInit();
+function bnd(v,g,w){return v>=g[0]&&v<=g[1]?'ok':v>=w[0]&&v<=w[1]?'warn':'bad'}
+function cabRender(){const cs=[['Carbon dioxide',Math.round(C.co2),'ppm',bnd(C.co2,[0,3000],[0,5000]),C.co2/7000],['Cabin heat',C.t.toFixed(1),'°C',bnd(C.t,[18,27],[15,30]),(C.t-5)/35],['Oxygen in cabin',C.o2.toFixed(1),'%',bnd(C.o2,[19.5,23.5],[18,25]),C.o2/30],['Oxygen reserve',Math.round(C.res),'hours left',bnd(C.res,[72,1e9],[24,1e9]),C.res/160]];
+$('cab').innerHTML=cs.map(c=>`<div class=panel><div class=mute>${c[0]}</div><div class=v>${c[1]} <span class=mute style='font-size:.85rem;font-weight:400'>${c[2]}</span></div><span class='st s-${c[3]}'>${LBL[c[3]]}</span><div class=meter><i style='width:${Math.min(100,Math.max(4,c[4]*100))}%;background:var(--${c[3]})'></i></div></div>`).join('');
+$('cabnote').textContent='Live readings inside the '+ENVS.find(x=>x.id===S.env).n.toLowerCase()+' (simulated), refreshed every few seconds.'}
+setInterval(()=>{C.co2=Math.max(1800,C.co2+(Math.random()-.48)*90);C.t+=(Math.random()-.5)*.25;C.o2=Math.min(23,Math.max(19,C.o2+(Math.random()-.5)*.08));C.res=Math.max(10,C.res-.02);cabRender();hazRender();rateTick()},3000);
+const DR=[['Dr. Amara Okafor','Flight surgeon'],['Dr. Lin Zhao','Space medicine'],['Dr. Mateo Silva','Psychiatry'],['Dr. Priya Nair','Cardiology'],['Dr. Elena Petrova','Radiation medicine']];
+const hs=s=>[...s].reduce((a,c)=>(a*31+c.charCodeAt(0))>>>0,7);
+function docs(sn){const h=hs(S.env+sn);return [0,1,2].map(j=>{const d=DR[(h+j*2)%5];return{n:d[0],sp:d[1],on:(h>>j)%3!==0}})}
+function stnRender(){const L=STN[S.env].slice().sort((a,b)=>a[1]-b[1]),mx=Math.log10(L[L.length-1][1]+10);
+const dots=L.map((s,j)=>{const a=hs(s[0])%360*Math.PI/180,r=18+Math.log10(s[1]+10)/mx*82,X=(110+r*Math.cos(a)).toFixed(1),Y=(110+r*Math.sin(a)).toFixed(1);return `<circle cx='${X}' cy='${Y}' r='${j?5:7}' fill='${j?'#a9b4ff':'#e9ad63'}'/><text x='${X}' y='${Y-9}' font-size='9' text-anchor='middle' fill='#f2e2c9'>${s[0].split(' ')[0]}</text>`}).join('');
+const rows=L.map((s,j)=>{const d=s[1]/299792,dl=d<1?Math.max(1,Math.round(d*1000))+' ms':d.toFixed(1)+' s';return `<div class=srow><strong>${s[0]}</strong> ${j?'':`<span class="st s-ok">Nearest</span>`}<div class=mute>${s[1].toLocaleString()} km, signal delay ${dl}</div>${docs(s[0]).map(k=>`<div class=dr><span>${k.n} <span class=mute>${k.sp}</span></span>${k.on?`<button class=env data-doc='${s[0]}|${k.n}'>Connect</button>`:`<span class="st s-warn">Busy</span>`}</div>`).join('')}</div>`}).join('');
+$('stn').innerHTML=`<div><svg viewBox='0 0 220 220' role='img' aria-label='Nearby stations radar'>${[30,60,100].map(r=>`<circle cx='110' cy='110' r='${r}' fill='none' stroke='#2b3566'/>`).join('')}<circle cx='110' cy='110' r='6' fill='#3fd1a5'/><text x='110' y='127' font-size='9' text-anchor='middle' fill='#f2e2c9'>You</text>${dots}</svg></div><div>${rows}</div>`}
+document.addEventListener('click',ev=>{const t=ev.target.closest('[data-doc]');if(t){const[s,d]=t.dataset.doc.split('|');SOST.forEach(clearTimeout);SOST=[];$('sosbody').innerHTML='<h2>Doctor call</h2><ul class=steps id=stl></ul><p class=mute>Training simulation.</p>';if(!$('sos').open)$('sos').showModal();
+['Calling '+s+'…','Securing link…','Sending crew profile for '+S.user.name+' and your vitals…','Connected to '+d+'. Say what you need.'].forEach((x,j)=>SOST.push(setTimeout(()=>$('stl').insertAdjacentHTML('beforeend','<li>'+(j<3?'⏳ ':'✅ ')+x+'</li>'),j*800)))}
+if(ev.target.closest('[data-env]')){cabInit();cabRender();stnRender();hazRender()}});
+const HZ={muscle:'Gravity fields',bone:'Gravity fields',ear:'Gravity fields',sleep:'Isolation and confinement',mood:'Isolation and confinement',move:'Gravity fields',rad:'Space radiation',co2:'Hostile or closed environments',spo2:'Hostile or closed environments'};
+const HAZ=[['Space radiation','hazard-space-radiation','Invisible, and one of the most hazardous parts of spaceflight.',['rad']],['Isolation and confinement','hazard-isolation-and-confinement','Crews far from Earth live in a small space for a long time, which shapes mood and teamwork.',['mood','sleep']],['Distance from Earth','hazard-distance-from-earth','Instructions, supplies and medical care get harder to receive the farther you go.',[]],['Gravity fields','hazard-gravity-fields','Muscles, bones, inner ear and organs must adjust to each new gravity level.',['move','muscle','bone','ear']],['Hostile or closed environments','hazard-hostile-closed-environments','A spacecraft is also a machine: temperature, pressure, air, noise and microbes all matter.',['co2','spo2']]];
+const RK={ok:0,warn:1,bad:2,none:0},NM=['ok','warn','bad'];
+function hazOld(){const e=ENVS.find(x=>x.id===S.env),n=STN[S.env].slice().sort((a,b)=>a[1]-b[1])[0],on=docs(n[0]).filter(d=>d.on).length,I=k=>IND.find(i=>i.k===k);
+const cabs=[bnd(C.co2,[0,3000],[0,5000]),bnd(C.t,[18,27],[15,30]),bnd(C.o2,[19.5,23.5],[18,25])];
+$('haz').innerHTML=HAZ.map(h=>{const dist=h[0]==='Distance from Earth',cl=h[0]==='Hostile or closed environments';let ss=h[3].map(k=>status(I(k),cur(I(k))));if(cl)ss=ss.concat(cabs);
+const s=dist?(on?'ok':'warn'):NM[Math.max(0,...ss.map(x=>RK[x]))];
+const ex=dist?`Nearest help: ${n[0]}, ${on} doctor${on===1?'':'s'} online.`:h[0]==='Gravity fields'?`Setting: ${e.g}. Tracks: Exercise, muscle, bone, inner ear.`:'Tracks: '+h[3].map(k=>I(k).n).join(', ')+(cl?', cabin air and heat.':'.');
+return `<div class=panel><span class='st s-${s}'>${LBL[s]}</span><h3 style='margin:6px 0 2px'><a href='https://www.nasa.gov/hrp/${h[1]}/' target=_blank rel=noopener>${h[0]}</a></h3><p class=mute>${h[2]}</p><p style='font-size:.9rem'>${ex}</p></div>`}).join('')}
+function rateVal(){return IND.find(x=>x.k==='rad')&&cur(IND.find(x=>x.k==='rad'))*1000/24*(1+(Math.random()-.5)*.06)}
+function rateTick(){const el=$('rate');if(el)el.textContent=rateVal().toFixed(1)}
+function rmRender(){const i=IND.find(x=>x.k==='rad'),v=cur(i),s=status(i,v),d=S.data.rad.concat(S.today.rad!=null?[S.today.rad]:[]),tot=d.reduce((a,b)=>a+b,0);
+const adv={ok:'Normal. Read your dosimeter once a day and sleep in the best-shielded area.',warn:'Elevated. Limit time in low-shielding areas and sleep in the best-shielded spot.',bad:'High. Go to the storm shelter now, stay until the all-clear and tell the medical team.'};
+const u=t=>`<span class=mute style='font-size:.85rem;font-weight:400'>${t}</span>`;
+$('rm').innerHTML=`<div class=rm><div><div class=mute>Dose today</div><div class=v>${fmt(i,v)} ${u('mSv')}</div><span class='st s-${s}'>${LBL[s]}</span></div><div><div class=mute>Live dose rate</div><div class=v><span id=rate>${rateVal().toFixed(1)}</span> ${u('µSv/h')}</div></div><div><div class=mute>Total, last ${d.length} days</div><div class=v>${tot.toFixed(1)} ${u('mSv')}</div></div><div><div class=mute>Neutron share (ISS reference)</div><div class=v>~30%</div><div class=mute>${(v*.3).toFixed(2)} mSv today</div></div></div><div class=mute>Daily dose, last ${d.length} days</div><div class=bars>${d.map(x=>`<i title='${x.toFixed(2)} mSv' style='height:${Math.min(100,x/i.max*100)}%;background:var(--${status(i,x)})'></i>`).join('')}</div><p><strong>${adv[s]}</strong></p><p class=mute>Neutron radiation makes up about 30% of the dose on the ISS and is especially harmful. Canada’s neutron spectrometer (CANS) is being developed to measure it continuously and autonomously. Carmel follows the same idea: log, split and trend your dose every day so changes show up early.</p><div class=row style='max-width:360px'><input type=number step=0.05 min=0 max=3 value='${S.draft.rad}' data-in=rad aria-label='Radiation dose in mSv per day'><button data-log=rad>Log dosimeter</button></div>`}
+const GL={ship:'Microgravity (about 0 g)',iss:'Microgravity (about 0 g)',rover:'Moon 1/6 g or Mars 3/8 g',base:'Moon 1/6 g or Mars 3/8 g'};
+S.ear=[0,0,0];
+function gbRender(){const R=['muscle','bone','ear'].map(k=>{const i=IND.find(x=>x.k===k),v=cur(i);return{i,v,s:status(i,v),ch:v-S.data[k][0]}});
+const dot=(x,y,r,s)=>`<circle cx='${x}' cy='${y}' r='${r}' fill='var(--${s==='none'?'mute':s})'/>`;
+const fig=`<svg viewBox='0 0 120 200' width='110' role='img' aria-label='Body map with muscle, bone and inner ear status'><circle cx='60' cy='26' r='16' fill='none' stroke='#b3a9c9' stroke-width='2'/><path d='M60 42V120M60 55L30 100M60 55L90 100M60 120L42 180M60 120L78 180' stroke='#b3a9c9' stroke-width='3' stroke-linecap='round' fill='none'/>${dot(41,26,5,R[2].s)}${dot(60,90,7,R[1].s)}${dot(36,85,7,R[0].s)}${dot(84,85,7,R[0].s)}</svg>`;
+const opts=['None','Mild','Moderate','Strong','Severe'],lab=['Dizziness or spinning','Nausea','Unsteadiness or disorientation'];
+$('gb').innerHTML=`<div style='text-align:center'>${fig}</div><div><p class=mute>Right now: ${GL[S.env]}. On Mars, astronauts would live in three-eighths of Earth’s gravity for up to two years, so muscles, bones and the inner ear keep adjusting.</p>${R.map(r=>`<div class=gbr><span><strong>${r.i.n}</strong> <span class=mute>${fmt(r.i,r.v)} ${r.i.u}${r.i.k==='ear'?'':', '+(r.ch>0?'+':'')+r.ch.toFixed(1)+' since 2 weeks ago'}</span></span><span class='st s-${r.s}'>${LBL[r.s]}</span></div>`).join('')}<div class=ph>Inner ear check</div><div class=ear>${lab.map((l,j)=>`<label class=mute>${l}<select class=env data-ear=${j}>${opts.map((o,q)=>`<option value=${q}${S.ear[j]===q?' selected':''}>${q} ${o}</option>`).join('')}</select></label>`).join('')}</div><button class=env id=earlog>Log inner ear check</button> <span class=mute>Log muscle and bone in the indicator cards.</span></div>`}
+document.addEventListener('change',ev=>{const t=ev.target;if(t.dataset&&t.dataset.ear!==undefined)S.ear[+t.dataset.ear]=+t.value});
+document.addEventListener('click',ev=>{if(ev.target.id==='earlog'){S.draft.ear=S.ear.reduce((a,b)=>a+b,0);log('ear')}});
+S.body='mars';S.mday=74;S.crew=[['Mira',3.8],['Jonas',3.4],['Aiko',4.1]].map(a=>({n:a[0],m:a[1]}));
+const RL={buf:[],acc:0};
+function helio(a,e,L0,Lr,w,t){const T=(t-946728000000)/3155760000000,L=(L0+Lr*T)*Math.PI/180,wp=w*Math.PI/180,M=(L-wp)%(2*Math.PI);let E=M;for(let k=0;k<7;k++)E=M+e*Math.sin(E);const x=a*(Math.cos(E)-e),y=a*Math.sqrt(1-e*e)*Math.sin(E),c=Math.cos(wp),s=Math.sin(wp);return[x*c-y*s,x*s+y*c]}
+function marsD(){const t=Date.now(),E=helio(1.00000261,.01671123,100.46457166,35999.37306,102.93768193,t),M=helio(1.52371034,.0933941,-4.55343205,19140.30268,-23.94362959,t),au=Math.hypot(E[0]-M[0],E[1]-M[1]),km=au*149597870.7;return{au,km,min:km/299792.458/60,E,M}}
+function trend(k){const d=S.data[k].concat(S.today[k]!=null?[S.today[k]]:[]),n=d.length,mx=(n-1)/2,my=d.reduce((a,b)=>a+b,0)/n;let num=0,den=0;d.forEach((y,x)=>{num+=(x-mx)*(y-my);den+=(x-mx)*(x-mx)});return num/den*30}
+function gNow(){if(S.env==='ship'||S.env==='iss')return{t:(1+(Math.random()-.5)*.4).toFixed(2)+' µg',k:'Weightless. Your body bears almost no load.'};const g=(S.body==='moon'?.166:.378)*(1+(Math.random()-.5)*.004);return{t:g.toFixed(3)+' g',k:'A 75 kg person feels like '+(g*75).toFixed(0)+' kg.'}}
+function fillLive(){const set=(id,t)=>{const e=$(id);if(e)e.textContent=t},r=RL.buf.length?RL.buf[RL.buf.length-1]:rateVal();
+set('rate',r.toFixed(1));set('r2',r.toFixed(2));set('racc',RL.acc.toFixed(4));
+const sp=$('rsp');if(sp&&RL.buf.length){const lo=Math.min(...RL.buf),hi=Math.max(...RL.buf);sp.setAttribute('points',RL.buf.map((v,j)=>(j*5)+','+(30-(v-lo)/((hi-lo)||1)*28)).join(' '))}
+const m=marsD();set('md',Math.round(m.km).toLocaleString());set('mau',m.au.toFixed(4));set('mdel',m.min.toFixed(1));const g=gNow();set('gv',g.t);set('gk',g.k)}
+let tc=0;function tick1(){const r=rateVal();if(r==null)return;RL.buf.push(r);if(RL.buf.length>40)RL.buf.shift();RL.acc+=r/3600;if(++tc%5===0)S.crew.forEach(c=>c.m=Math.min(5,Math.max(1,c.m+(Math.random()-.5)*.12)));fillLive()}
+setInterval(tick1,1000);
+document.addEventListener('click',ev=>{const b=ev.target.closest('[data-body]');if(b){S.body=b.dataset.body;hazRender()}});
+function hazRender(){const I=k=>IND.find(i=>i.k===k),st=k=>status(I(k),cur(I(k))),W=a=>NM[Math.max(0,...a.map(x=>RK[x]))];
+const n=STN[S.env].slice().sort((a,b)=>a[1]-b[1])[0],on=docs(n[0]).filter(d=>d.on).length;
+const card=(h,l,s,b)=>`<div class=panel><span class='st s-${s}'>${LBL[s]}</span> <span class=mute style='font-size:.8rem'>NASA hazard: <a href='https://www.nasa.gov/hrp/${l}/' target=_blank rel=noopener>${h}</a></span>${b}</div>`;
+const sub=t=>`<span class=mute style='font-size:.85rem;font-weight:400'>${t}</span>`,H3=t=>`<h3 style='margin:6px 0 2px'>${t}</h3>`;
+const loss=(k,name,extra)=>{const v=cur(I(k)),r=-trend(k);return H3(name)+`<div class=v>${Math.max(0,100-v).toFixed(1)}% ${sub('below baseline')}</div><div class=meter><i style='width:${Math.min(100,v)}%;background:var(--${st(k)})'></i></div><p class=mute>${I(k).n} is ${v}% of baseline. ${r>0?'Losing about '+r.toFixed(2)+' % per month.':'Regaining about '+Math.abs(r).toFixed(2)+' % per month.'} ${extra}</p>`};
+const rad=H3('Radiation, measured every second')+`<div class=v><span id=r2>0</span> ${sub('µSv/h')}</div><svg viewBox='0 0 200 32' width='100%' height='32' aria-hidden='true'><polyline id=rsp fill='none' stroke='var(--accent)' stroke-width='1.5' points=''/></svg><p class=mute>Since you opened Carmel: <span id=racc>0</span> µSv. Dose today: ${fmt(I('rad'),cur(I('rad')))} mSv.</p>`;
+const m=marsD(),ox=p=>(100+p[0]*32).toFixed(1),oy=p=>(60-p[1]*32).toFixed(1);
+const orr=`<svg viewBox='0 0 200 120' width='100%' height='110' role='img' aria-label='Earth and Mars positions around the Sun'><circle cx='100' cy='60' r='32' fill='none' stroke='#2b3566'/><circle cx='100' cy='60' r='48.7' fill='none' stroke='#2b3566'/><circle cx='100' cy='60' r='6' fill='#ffd36b'/><line x1='${ox(m.E)}' y1='${oy(m.E)}' x2='${ox(m.M)}' y2='${oy(m.M)}' stroke='#e9ad63' stroke-dasharray='3 3'/><circle cx='${ox(m.E)}' cy='${oy(m.E)}' r='5' fill='#6cd4ff'/><circle cx='${ox(m.M)}' cy='${oy(m.M)}' r='4' fill='#ff8f6b'/></svg>`;
+const dist=H3('Earth to Mars, right now')+`<div class=v><span id=md>0</span> ${sub('km')}</div><p class=mute><span id=mau>0</span> AU. One-way signal delay <span id=mdel>0</span> min. Approximate, from orbital elements.</p>${orr}<p class=mute>Nearest help from here: ${n[0]}, ${on} doctor${on===1?'':'s'} online.</p>`;
+const surf=S.env==='rover'||S.env==='base',gs=[['Weightless',0],['Moon',.166],['Mars',.378],['Earth',1]],act=surf?(S.body==='moon'?1:2):0;
+const btn=surf?`<div style='margin:6px 0'>${['moon','mars'].map(b=>`<button class=env data-body=${b} aria-pressed=${S.body===b}>${b==='moon'?'Moon':'Mars'}</button>`).join(' ')}</div>`:'';
+const grav=H3('Gravity field')+`<div class=v><span id=gv>0</span></div><p class=mute id=gk></p>${btn}`+gs.map((g,j)=>`<div style='display:flex;align-items:center;gap:6px;font-size:.8rem'><span style='width:72px'>${g[0]}</span><span class=meter style='flex:1;margin:0'><i style='width:${Math.max(2,g[1]*100)}%;background:${j===act?'var(--accent)':'var(--mute)'}'></i></span><span style='width:48px;text-align:right'>${g[1]} g</span></div>`).join('')+`<p class=mute>Inner ear score: ${cur(I('ear'))}/12.</p>`;
+const crew=[{n:'You',m:cur(I('mood'))}].concat(S.crew),cs=crew.map(c=>status(I('mood'),c.m)),avg=crew.reduce((a,c)=>a+c.m,0)/crew.length,low=crew.slice().sort((a,b)=>a.m-b.m)[0];
+const cl=crew.map((c,j)=>`<div style='display:flex;align-items:center;gap:6px;font-size:.85rem'><span style='width:72px'>${c.n}</span><span class=meter style='flex:1;margin:0'><i style='width:${c.m/5*100}%;background:var(--${cs[j]})'></i></span><span style='width:30px;text-align:right'>${c.m.toFixed(1)}</span></div>`).join('');
+const iso=H3('Isolation and crew mental health')+`<div class=v>${(avg/5*100).toFixed(0)}% ${sub('crew morale')}</div>${cl}<p class=mute>Day ${S.mday} in isolation (simulated). Contact with Earth: 3 calls this week. Your sleep: ${fmt(I('sleep'),cur(I('sleep')))} h.${low.m<3?' Check in with '+(low.n==='You'?'someone you trust':low.n)+' today.':''}</p>`;
+$('haz').innerHTML=card('Space radiation','hazard-space-radiation',st('rad'),rad)+card('Gravity fields','hazard-gravity-fields',st('bone'),loss('bone','Bone loss',''))+card('Gravity fields','hazard-gravity-fields',st('muscle'),loss('muscle','Muscle weakness','Exercise today: '+fmt(I('move'),cur(I('move')))+' min.'))+card('Distance from Earth','hazard-distance-from-earth',on?'ok':'warn',dist)+card('Gravity fields','hazard-gravity-fields',W([st('ear'),st('move')]),grav)+card('Isolation and confinement','hazard-isolation-and-confinement',W(cs.concat([st('sleep')])),iso);fillLive()}
+const _r=render;render=function(){_r();cabRender();stnRender();profRender();hazRender();rmRender();gbRender()};
+let DU={run:0,orbs:[],sp:[],n:0,t0:0};
+function dustStart(){const c=$('dust'),x=c.getContext('2d');c.width=c.clientWidth;c.height=190;DU.orbs=[];DU.sp=[];DU.n=0;DU.t0=Date.now();DU.run=1;const rm=matchMedia('(prefers-reduced-motion:reduce)').matches;
+(function f(){if(!DU.run)return;const e=(Date.now()-DU.t0)/1000;if(e>=45){DU.run=0;x.clearRect(0,0,c.width,c.height);$('dlab').textContent='Released '+DU.n+' lights. +10 XP. Take one slow breath.';S.xp+=10;toast('+10 XP. Stress relief done.');render();return}
+if(Math.random()<.04)DU.orbs.push({x:Math.random()*c.width,y:c.height+20,r:10+Math.random()*14,v:(rm?.15:.4)+Math.random()*.4,h:Math.random()*60+20});
+x.clearRect(0,0,c.width,c.height);
+DU.orbs.forEach(o=>{o.y-=o.v;o.x+=Math.sin(o.y/30)*.3;const g=x.createRadialGradient(o.x,o.y,1,o.x,o.y,o.r);g.addColorStop(0,'hsla('+o.h+',90%,75%,.9)');g.addColorStop(1,'hsla('+o.h+',90%,60%,0)');x.fillStyle=g;x.beginPath();x.arc(o.x,o.y,o.r,0,6.28);x.fill()});
+DU.orbs=DU.orbs.filter(o=>o.y>-30);
+DU.sp.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.l--;x.globalAlpha=Math.max(0,p.l/30);x.fillStyle='#f6d9a8';x.fillRect(p.x,p.y,2,2)});x.globalAlpha=1;DU.sp=DU.sp.filter(p=>p.l>0);
+$('dlab').textContent='Released '+DU.n+', '+(45-Math.floor(e))+' s left';requestAnimationFrame(f)})()}
+$('dust').addEventListener('pointerdown',ev=>{if(!DU.run)return;const r=$('dust').getBoundingClientRect(),px=ev.clientX-r.left,py=ev.clientY-r.top,i=DU.orbs.findIndex(o=>Math.hypot(o.x-px,o.y-py)<o.r+8);if(i<0)return;const o=DU.orbs.splice(i,1)[0];DU.n++;for(let k=0;k<14;k++)DU.sp.push({x:o.x,y:o.y,vx:(Math.random()-.5)*3,vy:(Math.random()-.5)*3,l:30})});
+$('dstart').onclick=()=>{if(!DU.run)dustStart()};
+seed();render();
+</script>
+</body>
+</html>
